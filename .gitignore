@@ -48,3 +48,7 @@ site/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Local agent config/state & temp dumps
+.claude/
+_docx_dump.txt

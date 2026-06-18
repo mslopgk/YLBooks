@@ -18,6 +18,7 @@ PARTS = [
     ("3부 — 내 손으로 만드는 리듬게임", range(9, 16)),
     ("4부 — 조이스틱으로 확장", range(16, 20)),
     ("5부 — 마무리와 자랑", range(20, 23)),
+    ("부록", range(23, 25)),
 ]
 
 PAGE_BREAK = "\n<!-- 페이지 나눔 -->\n\n"
@@ -25,11 +26,17 @@ PAGE_BREAK = "\n<!-- 페이지 나눔 -->\n\n"
 
 def chapter_title(text: str) -> str:
     m = re.search(r"^# (\d+장 .+)$", text, re.MULTILINE)
+    if m:
+        return m.group(1)
+    m = re.search(r"^# (부록 .+)$", text, re.MULTILINE)
     return m.group(1) if m else "(제목 없음)"
 
 
 def build_toc(sources: dict[int, str]) -> str:
     lines = ["## 목차", ""]
+    if 0 in sources:
+        lines.append(f"**{chapter_title(sources[0])}**")
+        lines.append("")
     for part_name, ch_range in PARTS:
         lines.append(f"**{part_name}**")
         for ch in ch_range:
@@ -71,7 +78,7 @@ def main() -> None:
 
     out_path.write_text("\n".join(parts), encoding="utf-8")
     total_chars = sum(len(t) for t in chapters.values())
-    print(f"✓ {len(chapters)}개 챕터 → {out_path} ({total_chars:,}자)")
+    print(f"[OK] {len(chapters)}개 챕터 -> {out_path} ({total_chars:,}자)")
 
 
 if __name__ == "__main__":

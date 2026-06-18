@@ -54,13 +54,14 @@ markdown_extensions:
 
 nav:
   - 시작: index.md
+  - 0장 이 책에서 만드는 것: ch00.md
   - 1부 바이브코딩 첫걸음:
       - 1장 왜 바이브코딩인가: ch01.md
       - 2장 Claude Code 설치하고 길들이기: ch02.md
-      - 3장 Antigravity로 시각적으로 코딩하기: ch03.md
+      - 3장 Claude Code 200% 활용 (스킬·CLAUDE.md·서브에이전트): ch03.md
   - 2부 키링이 살아나는 순간:
       - 4장 키링 보드 처음 만나기: ch04.md
-      - 5장 Arduino IDE 설정과 첫 업로드: ch05.md
+      - 5장 arduino-cli 설정과 첫 업로드: ch05.md
       - 6장 버튼 하나로 키보드 흉내내기: ch06.md
       - 7장 채터링과의 전쟁(디바운싱): ch07.md
       - 8장 4버튼 키링 완성: ch08.md
@@ -81,3 +82,6 @@ nav:
       - 20장 키링 케이스와 마감: ch20.md
       - 21장 깃허브에 공개하고 README 쓰기: ch21.md
       - 22장 발표·다음 단계 로드맵: ch22.md
+  - 부록:
+      - 부록 A 프롬프트 템플릿 모음: ch23.md
+      - 부록 B 명령어 치트시트: ch24.md
