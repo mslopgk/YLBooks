@@ -52,3 +52,11 @@ desktop.ini
 # Local agent config/state & temp dumps
 .claude/
 _docx_dump.txt
+
+# Word 임시·잠금 파일
+~$*.docx
+*.tmp
+
+# Node / Expo
+node_modules/
+.expo/

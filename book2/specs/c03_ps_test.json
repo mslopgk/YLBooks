@@ -1,0 +1,7 @@
+{
+  "app": "powershell.exe",
+  "args": ["-NoExit","-Command","$host.ui.RawUI.WindowTitle='CAPWIN_PS'; Write-Host ''; node -v; npm -v; Write-Host ''"],
+  "window_match": "CAPWIN_PS",
+  "launch_wait": 4,
+  "steps": [ {"name":"c03_powershell_node", "wait":1.2} ]
+}
