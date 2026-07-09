@@ -54,10 +54,10 @@
 
 그러면 터미널 맨 앞의 주소가 바뀝니다. 아래 그림처럼 **`PS C:\Users\...\Desktop\rhythm-game>`** 로 끝나면, 지금 내가 그 폴더 "안"에 들어와 있다는 뜻입니다. 이 긴 글자가 바로 폴더의 **경로(주소)**입니다.
 
-<!-- FIG: id=c04-f03 | type=스크린샷 | src=capture | file=images/c03/c03_ps_open.png -->
+<!-- FIG: id=c04-f03 | type=스크린샷 | src=capture | status=todo | file=images/c04/c04-f03.png -->
 > **그림 4.3 — 터미널 맨 앞에 보이는 경로 — 지금 rhythm-game 폴더 안입니다**
 
-![그림 4.3 — 터미널에 보이는 폴더 경로](../images/c03/c03_ps_open.png)
+![그림 4.3 — 터미널에 보이는 폴더 경로](../images/c04/c04-f03.png)
 
 !!! tip "💡 `cd`가 뭐예요?"
     `cd`는 "이 폴더로 옮겨 가자(change directory)"라는 뜻의 명령입니다. `$HOME`은 "내 사용자 폴더"를 가리키는 약속어라, `$HOME\Desktop\rhythm-game`은 "내 바탕화면의 rhythm-game 폴더"라는 주소가 됩니다.

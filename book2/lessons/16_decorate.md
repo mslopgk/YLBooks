@@ -32,10 +32,10 @@ AI에게 화면 전체 색 분위기를 부탁해 봅니다.
 
 AI가 색을 바꾸고 나면 실행해서 확인합니다.
 
-<!-- FIG: id=c16-f01 | type=스크린샷 | src=capture | file=images/game/game_start.png -->
+<!-- FIG: id=c16-f01 | type=스크린샷 | src=capture | status=todo | file=images/c16/c16-f01.png -->
 > **그림 16.1 — 색깔을 새로 입힌 시작화면 (방향키 4개가 각각 다른 색)**
 
-![그림 16.1 — 색깔을 새로 입힌 시작화면](../images/game/game_start.png)
+![그림 16.1 — 색깔을 새로 입힌 시작화면](../images/c16/c16-f01.png)
 
 ### 단계 ② 제목과 소개 문구 바꾸기
 

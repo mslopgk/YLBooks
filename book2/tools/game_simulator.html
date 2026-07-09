@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>리듬 스텝 시뮬레이터</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=Noto+Sans+KR:wght@300;400;700;900&display=swap');
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background: radial-gradient(circle at center, #0d1527 0%, #05070f 100%);
+            color: #ffffff;
+            width: 1280px;
+            height: 720px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* --- LAYOUTS --- */
+        .game-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            padding: 40px;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Left side panel */
+        .side-panel-left {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .now-playing-box {
+            background: rgba(13, 25, 47, 0.6);
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+        }
+
+        .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #00f2fe;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .song-title {
+            font-size: 24px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin-top: 16px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00f2fe, #4facfe);
+            width: 15%;
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.8);
+        }
+
+        .accuracy-box {
+            background: rgba(13, 25, 47, 0.6);
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+        }
+
+        .accuracy-val {
+            font-size: 32px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+
+        .grade-badge {
+            font-size: 48px;
+            font-weight: 900;
+            color: #00f2fe;
+            text-shadow: 0 0 20px rgba(0, 242, 254, 0.6);
+        }
+
+        /* Center playfield */
+        .playfield {
+            width: 560px;
+            height: 100%;
+            background: rgba(5, 8, 22, 0.7);
+            border-left: 2px solid rgba(0, 242, 254, 0.15);
+            border-right: 2px solid rgba(0, 242, 254, 0.15);
+            position: relative;
+            display: flex;
+        }
+
+        .lane {
+            flex: 1;
+            height: 100%;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+
+        .lane:last-child {
+            border-right: none;
+        }
+
+        /* Judgment Line */
+        .judgment-line {
+            position: absolute;
+            bottom: 120px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, #00f2fe, transparent);
+            box-shadow: 0 0 15px #00f2fe, 0 0 5px #00f2fe;
+            z-index: 10;
+        }
+
+        /* Keycaps at bottom */
+        .keycap-container {
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            padding: 0 20px;
+            z-index: 5;
+        }
+
+        .keycap {
+            width: 80px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            font-weight: bold;
+            background: rgba(13, 25, 47, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.1s ease;
+        }
+
+        /* Colorful borders based on direction */
+        .key-left { border-color: rgba(255, 75, 160, 0.4); color: #ff4ba0; text-shadow: 0 0 10px rgba(255, 75, 160, 0.6); }
+        .key-down { border-color: rgba(0, 242, 254, 0.4); color: #00f2fe; text-shadow: 0 0 10px rgba(0, 242, 254, 0.6); }
+        .key-up { border-color: rgba(57, 255, 20, 0.4); color: #39ff14; text-shadow: 0 0 10px rgba(57, 255, 20, 0.6); }
+        .key-right { border-color: rgba(255, 204, 0, 0.4); color: #ffcc00; text-shadow: 0 0 10px rgba(255, 204, 0, 0.6); }
+
+        .key-left.active { background: #ff4ba0; color: #fff; box-shadow: 0 0 20px #ff4ba0; }
+        .key-down.active { background: #00f2fe; color: #fff; box-shadow: 0 0 20px #00f2fe; }
+        .key-up.active { background: #39ff14; color: #fff; box-shadow: 0 0 20px #39ff14; }
+        .key-right.active { background: #ffcc00; color: #fff; box-shadow: 0 0 20px #ffcc00; }
+
+        /* Notes falling */
+        .note {
+            position: absolute;
+            width: 80px;
+            height: 24px;
+            border-radius: 12px;
+            left: calc(50% - 40px);
+            box-shadow: 0 0 20px currentColor;
+        }
+
+        /* Right side panel */
+        .side-panel-right {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .score-box {
+            background: rgba(13, 25, 47, 0.6);
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+        }
+
+        .score-val {
+            font-size: 48px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+
+        .combo-box {
+            background: rgba(13, 25, 47, 0.6);
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+        }
+
+        .combo-val {
+            font-size: 54px;
+            font-weight: 900;
+            color: #00f2fe;
+            text-shadow: 0 0 25px rgba(0, 242, 254, 0.8);
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+
+        /* Judgment Text (PERFECT / MISS) */
+        .judgment-text {
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            z-index: 100;
+            text-shadow: 0 0 20px currentColor;
+        }
+
+        .txt-perfect { color: #39ff14; }
+        .txt-miss { color: #ff3b30; }
+
+        /* Volume icon */
+        .vol-btn {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(13, 25, 47, 0.6);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #00f2fe;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);
+        }
+
+        /* --- START SCREEN MODE --- */
+        .start-screen-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(13, 21, 39, 0.95) 0%, rgba(5, 7, 15, 0.98) 100%);
+            display: flex;
+            padding: 80px;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 200;
+        }
+
+        .title-area {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 6px;
+            color: #00f2fe;
+            text-transform: uppercase;
+        }
+
+        .main-title {
+            font-size: 84px;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 2px;
+            text-shadow: 0 0 30px rgba(0, 242, 254, 0.6);
+            position: relative;
+        }
+
+        .main-title::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 160px;
+            height: 5px;
+            background: #00f2fe;
+            box-shadow: 0 0 15px #00f2fe;
+        }
+
+        .desc-text {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 15px;
+            font-weight: 300;
+        }
+
+        .arrow-keys-preview {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .arrow-key-box {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            background: rgba(13, 25, 47, 0.4);
+            color: #00f2fe;
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.1);
+        }
+
+        .arrow-key-box.pink { border-color: #ff4ba0; color: #ff4ba0; }
+        .arrow-key-box.green { border-color: #39ff14; color: #39ff14; }
+        .arrow-key-box.yellow { border-color: #ffcc00; color: #ffcc00; }
+
+        .keyboard-desc {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 15px;
+        }
+
+        .menu-area {
+            width: 440px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .menu-current-song {
+            background: rgba(13, 25, 47, 0.5);
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+        }
+
+        .menu-vol {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            color: #00f2fe;
+            font-size: 20px;
+        }
+
+        .play-btn {
+            background: linear-gradient(90deg, #00f2fe, #4facfe);
+            color: #05070f;
+            border: none;
+            border-radius: 12px;
+            padding: 18px;
+            font-size: 20px;
+            font-weight: 900;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 16px;
+            cursor: pointer;
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.6);
+            transition: all 0.2s ease;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 35px rgba(0, 242, 254, 0.8);
+        }
+
+        /* Timing Offset Box (Cleaned to align with context) */
+        .timing-offset-box {
+            background: rgba(13, 25, 47, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .offset-title {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .offset-title span {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .offset-title small {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .offset-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .offset-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .offset-val {
+            font-size: 16px;
+            font-weight: bold;
+            color: #00f2fe;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        /* --- DIFFICULTY OVERLAY MODE (Cleaned) --- */
+        .difficulty-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 7, 15, 0.85);
+            z-index: 300;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .difficulty-card {
+            width: 480px;
+            background: rgba(13, 21, 39, 0.95);
+            border: 1.5px solid rgba(0, 242, 254, 0.3);
+            border-radius: 24px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.8);
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .diff-title {
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .diff-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .diff-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1.5px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .diff-name-desc {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .diff-name-desc strong {
+            font-size: 18px;
+            letter-spacing: 1px;
+        }
+
+        .diff-name-desc span {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .diff-item.easy strong { color: #39ff14; }
+        .diff-item.normal { border-color: #00f2fe; box-shadow: 0 0 15px rgba(0, 242, 254, 0.2); }
+        .diff-item.normal strong { color: #00f2fe; }
+        .diff-item.hard strong { color: #ffcc00; }
+        .diff-item.expert strong { color: #ff3b30; }
+
+        .diff-arrow {
+            color: #00f2fe;
+            font-size: 20px;
+        }
+
+        /* Note Speed Control UI */
+        .control-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .control-row-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .control-row-title small {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .speed-slider-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 10px 16px;
+        }
+
+        .speed-bar-fill {
+            flex: 1;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            position: relative;
+        }
+
+        .speed-bar-progress {
+            width: 70%;
+            height: 100%;
+            background: #00f2fe;
+            border-radius: 6px;
+        }
+
+        .speed-bar-knob {
+            width: 18px;
+            height: 18px;
+            background: #ffffff;
+            border: 2px solid #00f2fe;
+            border-radius: 50%;
+            position: absolute;
+            top: -3px;
+            left: 70%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.8);
+        }
+
+        .speed-val-display {
+            font-size: 14px;
+            font-weight: bold;
+            color: #00f2fe;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        /* Practice Music Speed UI */
+        .practice-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .practice-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .practice-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.02);
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: bold;
+            font-size: 13px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .practice-btn.active {
+            border-color: #00f2fe;
+            background: rgba(0, 242, 254, 0.1);
+            color: #00f2fe;
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main Game UI -->
+    <div class="game-container" id="gameUI">
+        <!-- Left Panel -->
+        <div class="side-panel-left">
+            <div class="now-playing-box">
+                <div class="label">Now Playing</div>
+                <div class="song-title">기본 곡</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+            </div>
+            
+            <div class="accuracy-box">
+                <div>
+                    <div class="label">Accuracy</div>
+                    <div class="accuracy-val" id="accuracyDisplay">0.00%</div>
+                </div>
+                <div class="grade-badge" id="gradeDisplay">D</div>
+            </div>
+        </div>
+
+        <!-- Center Playfield -->
+        <div class="playfield">
+            <div class="lane" id="lane0"></div>
+            <div class="lane" id="lane1"></div>
+            <div class="lane" id="lane2"></div>
+            <div class="lane" id="lane3"></div>
+            
+            <div class="judgment-line"></div>
+            
+            <div class="keycap-container">
+                <div class="keycap key-left" id="key0">←</div>
+                <div class="keycap key-down" id="key1">↓</div>
+                <div class="keycap key-up" id="key2">↑</div>
+                <div class="keycap key-right" id="key3">→</div>
+            </div>
+
+            <!-- Note elements are dynamically created -->
+            <div id="notesContainer"></div>
+
+            <!-- Judgment message overlay -->
+            <div class="judgment-text" id="judgmentText"></div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="side-panel-right">
+            <div class="score-box">
+                <div class="label">Score</div>
+                <div class="score-val" id="scoreDisplay">0</div>
+            </div>
+
+            <div class="combo-box">
+                <div class="label">Combo</div>
+                <div class="combo-val" id="comboDisplay">0</div>
+            </div>
+        </div>
+
+        <!-- Audio indicator -->
+        <div class="vol-btn">
+            <span style="font-size: 20px;">🔊</span>
+        </div>
+    </div>
+
+    <!-- START SCREEN OVERLAY -->
+    <div class="start-screen-overlay" id="startScreen">
+        <div class="title-area">
+            <div class="subtitle">Arrow · Rhythm</div>
+            <div class="main-title">리듬 스텝</div>
+            <div class="desc-text">네 방향키로 비트를 밟는 DDR 스타일 리듬 게임</div>
+            
+            <div class="arrow-keys-preview">
+                <div class="arrow-key-box pink">←</div>
+                <div class="arrow-key-box">↓</div>
+                <div class="arrow-key-box green">↑</div>
+                <div class="arrow-key-box yellow">→</div>
+            </div>
+            <div class="keyboard-desc">↑ ↓ 선택 · → 결정 · 화면 터치도 가능</div>
+        </div>
+
+        <div class="menu-area">
+            <div class="menu-current-song">
+                <div class="label">현재 곡</div>
+                <div class="song-title">기본 곡</div>
+                <div style="font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 4px;">기본 곡 · 120 BPM</div>
+                <button class="play-btn" id="startPlayBtn">▶ PLAY</button>
+                <div class="menu-vol">🔊</div>
+            </div>
+
+            <div class="timing-offset-box">
+                <div class="offset-title">
+                    <span>타이밍 보정</span>
+                    <small>입력 오프셋 미세 조정</small>
+                </div>
+                <div class="offset-controls">
+                    <div class="offset-btn">-</div>
+                    <div class="offset-val">+50ms</div>
+                    <div class="offset-btn">+</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DIFFICULTY SELECTION OVERLAY -->
+    <div class="difficulty-overlay" id="difficultyScreen" style="display: none;">
+        <div class="difficulty-card">
+            <div class="diff-title">난이도 선택</div>
+            <div style="font-size: 12px; color: rgba(255,255,255,0.4); text-align: center; margin-top: -16px; margin-bottom: 8px;">곡 : 기본 곡</div>
+            
+            <div class="diff-list">
+                <div class="diff-item easy">
+                    <div class="diff-name-desc">
+                        <strong>EASY</strong>
+                        <span>밀도 노트 적음 · 속도는 공통 (노트 속도 설정)</span>
+                    </div>
+                </div>
+                <div class="diff-item normal">
+                    <div class="diff-name-desc">
+                        <strong>NORMAL</strong>
+                        <span>밀도 표준 밀도 · 속도는 공통 (노트 속도 설정)</span>
+                    </div>
+                    <div class="diff-arrow">▶</div>
+                </div>
+                <div class="diff-item hard">
+                    <div class="diff-name-desc">
+                        <strong>HARD</strong>
+                        <span>밀도 노트 많음 · 속도는 공통 (노트 속도 설정)</span>
+                    </div>
+                </div>
+                <div class="diff-item expert">
+                    <div class="diff-name-desc">
+                        <strong>EXPERT</strong>
+                        <span>밀도 노트 폭주 · 속도는 공통 (노트 속도 설정)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-row">
+                <div class="control-row-title">
+                    <span>노트 속도</span>
+                    <small>낙하 1500ms · 작을수록 빠름 · 난이도 공통 (- 빠르게, + 느리게)</small>
+                </div>
+                <div class="speed-slider-area">
+                    <div class="offset-btn">-</div>
+                    <div class="speed-bar-fill">
+                        <div class="speed-bar-progress"></div>
+                        <div class="speed-bar-knob"></div>
+                    </div>
+                    <div class="speed-val-display">1500ms</div>
+                    <div class="offset-btn">+</div>
+                </div>
+            </div>
+
+            <div class="practice-row">
+                <div class="label" style="margin-bottom: 4px;">노래 속도 (연습)</div>
+                <div class="practice-btns">
+                    <div class="practice-btn">0.5x</div>
+                    <div class="practice-btn">0.75x</div>
+                    <div class="practice-btn active">1x</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIMULATOR CONTROLLER SCRIPT -->
+    <script>
+        // Get query parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode') || 'start'; // start, difficulty, play1, play2, play3
+
+        // DOM elements
+        const startScreen = document.getElementById('startScreen');
+        const difficultyScreen = document.getElementById('difficultyScreen');
+        const gameUI = document.getElementById('gameUI');
+        const notesContainer = document.getElementById('notesContainer');
+        const judgmentText = document.getElementById('judgmentText');
+        const accuracyDisplay = document.getElementById('accuracyDisplay');
+        const gradeDisplay = document.getElementById('gradeDisplay');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const comboDisplay = document.getElementById('comboDisplay');
+        const progressBar = document.getElementById('progressBar');
+
+        // Hide all screens initially
+        startScreen.style.display = 'none';
+        difficultyScreen.style.display = 'none';
+
+        // Render according to mode
+        if (mode === 'start') {
+            startScreen.style.display = 'flex';
+        } else if (mode === 'difficulty') {
+            startScreen.style.display = 'flex'; // show background start screen blurry
+            difficultyScreen.style.display = 'flex';
+        } else if (mode === 'play1') {
+            // Mode play1: Clean falling notes, no score/combo accumulation, no judgment texts
+            progressBar.style.width = '5%';
+            accuracyDisplay.textContent = '0.00%';
+            gradeDisplay.textContent = 'D';
+            scoreDisplay.textContent = '0';
+            comboDisplay.textContent = '0';
+            
+            // Create pure falling notes (no MISS overlay yet)
+            createNote(1, 240, '#00f2fe'); // lane 1 (blue)
+            createNote(2, 80, '#39ff14');  // lane 2 (green)
+        } else if (mode === 'play2') {
+            // Mode play2: Play mid-state, just missed a note. score: 0, combo: 0, accuracy: 0.00%
+            progressBar.style.width = '8%';
+            accuracyDisplay.textContent = '0.00%';
+            gradeDisplay.textContent = 'D';
+            scoreDisplay.textContent = '0';
+            comboDisplay.textContent = '0';
+            
+            // Show MISS text
+            judgmentText.textContent = 'MISS';
+            judgmentText.className = 'judgment-text txt-miss';
+            
+            // Pressed visual feedback for lane 1 (blue)
+            document.getElementById('key1').classList.add('active');
+
+            // Notes falling
+            createNote(0, 480, '#ff4ba0'); // lane 0
+            createNote(2, 100, '#39ff14'); // lane 2
+            createNote(3, 300, '#ffcc00'); // lane 3
+        } else if (mode === 'play3') {
+            // Mode play3: SCORE: 1000, COMBO: 0 (just missed after hitting 1000 points). ACC: 0.59%
+            progressBar.style.width = '11%';
+            accuracyDisplay.textContent = '0.59%';
+            gradeDisplay.textContent = 'D';
+            scoreDisplay.textContent = '1,000';
+            comboDisplay.textContent = '0';
+
+            // Show MISS text
+            judgmentText.textContent = 'MISS';
+            judgmentText.className = 'judgment-text txt-miss';
+
+            // Falling notes
+            createNote(0, 200, '#ff4ba0'); // lane 0
+            createNote(0, 380, '#ff4ba0'); // lane 0
+        }
+
+        // Helper function to render a note on screen
+        function createNote(lane, top, color) {
+            const noteEl = document.createElement('div');
+            noteEl.className = 'note';
+            noteEl.style.top = top + 'px';
+            noteEl.style.color = color;
+            noteEl.style.background = `linear-gradient(180deg, ${color} 0%, rgba(0,0,0,0.6) 100%)`;
+            noteEl.style.border = `1.5px solid ${color}`;
+            
+            // Add arrow character inside note based on lane
+            const arrows = ['←', '↓', '↑', '→'];
+            noteEl.style.display = 'flex';
+            noteEl.style.justifyContent = 'center';
+            noteEl.style.alignItems = 'center';
+            noteEl.style.fontSize = '14px';
+            noteEl.style.fontWeight = 'bold';
+            noteEl.textContent = arrows[lane];
+            
+            document.getElementById('lane' + lane).appendChild(noteEl);
+        }
+    </script>
+</body>
+</html>
